@@ -1,0 +1,653 @@
+services:
+  dns:
+    build: ./dns
+    container_name: dns
+    networks:
+      default:
+        ipv4_address: ${DNS_IP}
+    env_file:
+      - .env
+    volumes:
+      - ./dns/unbound.conf.template:/opt/unbound/etc/unbound/unbound.conf.template:ro
+  hdb:
+    image: mongo:6.0
+    container_name: hdb
+    command: --bind_ip 0.0.0.0
+    env_file:
+      - .env
+      - h-plmn/h-plmn.env
+    volumes:
+      - hdbdata:/data/db
+      - hdbdata:/data/configdb
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "27017/udp"
+      - "27017/tcp"
+    networks:
+      default:
+        ipv4_address: ${HDB_IP}
+  vdb:
+    image: mongo:6.0
+    container_name: vdb
+    command: --bind_ip 0.0.0.0
+    env_file:
+      - .env
+      - v-plmn/v-plmn.env
+    volumes:
+      - vdbdata:/data/db
+      - vdbdata:/data/configdb
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "27017/udp"
+      - "27017/tcp"
+    networks:
+      default:
+        ipv4_address: ${VDB_IP}
+
+  hwebui:
+    image: docker_open5gs
+    container_name: hwebui
+    depends_on:
+      - hdb
+      - dns
+    env_file:
+      - .env
+      - h-plmn/h-plmn.env
+    environment:
+      - COMPONENT_NAME=webui
+    volumes:
+      - ./h-plmn/webui:/mnt/webui
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "9999/tcp"
+    ports:
+      - "9998:9999/tcp"
+    networks:
+      default:
+        ipv4_address: ${HWEBUI_IP}
+    dns:
+      - ${DNS_IP}
+  vwebui:
+    image: docker_open5gs
+    container_name: vwebui
+    depends_on:
+      - vdb
+      - dns
+    env_file:
+      - .env
+      - v-plmn/v-plmn.env
+    environment:
+      - COMPONENT_NAME=webui
+    volumes:
+      - ./v-plmn/webui:/mnt/webui
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "9999/tcp"
+    ports:
+      - "9997:9999/tcp"
+    networks:
+      default:
+        ipv4_address: ${VWEBUI_IP}
+    dns:
+      - ${DNS_IP}
+
+  hnrf:
+    image: docker_open5gs
+    container_name: hnrf
+    depends_on:
+      - dns
+    env_file:
+      - .env
+      - h-plmn/h-plmn.env
+    environment:
+      - COMPONENT_NAME=nrf
+    volumes:
+      - ./h-plmn/nrf:/mnt/nrf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+    networks:
+      default:
+        ipv4_address: ${HNRF_IP}
+    dns:
+      - ${DNS_IP}
+  hscp:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - hnrf
+    container_name: hscp
+    env_file:
+      - .env
+      - h-plmn/h-plmn.env
+    environment:
+      - COMPONENT_NAME=scp
+    volumes:
+      - ./h-plmn/scp:/mnt/scp
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+    networks:
+      default:
+        ipv4_address: ${HSCP_IP}
+    dns:
+      - ${DNS_IP}
+  hausf:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - hnrf
+      - hscp
+    container_name: hausf
+    env_file:
+      - .env
+      - h-plmn/h-plmn.env
+    environment:
+      - COMPONENT_NAME=ausf
+    volumes:
+      - ./h-plmn/ausf:/mnt/ausf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+    networks:
+      default:
+        ipv4_address: ${HAUSF_IP}
+    dns:
+      - ${DNS_IP}
+  
+  hudm:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - hnrf
+      - hscp
+    container_name: hudm
+    env_file:
+      - .env
+      - h-plmn/h-plmn.env
+    environment:
+      - COMPONENT_NAME=udm
+    volumes:
+      - ./h-plmn/udm:/mnt/udm
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+    networks:
+      default:
+        ipv4_address: ${HUDM_IP}
+    dns:
+      - ${DNS_IP}
+  
+  hudr:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - hnrf
+      - hscp
+      - hdb
+    container_name: hudr
+    env_file:
+      - .env
+      - h-plmn/h-plmn.env
+    environment:
+      - COMPONENT_NAME=udr
+    volumes:
+      - ./h-plmn/udr:/mnt/udr
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+    networks:
+      default:
+        ipv4_address: ${HUDR_IP}
+    dns:
+      - ${DNS_IP}
+  hsmf:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - hnrf
+      - hscp
+    container_name: hsmf
+    env_file:
+      - .env
+      - h-plmn/h-plmn.env
+    environment:
+      - COMPONENT_NAME=smf
+      # - DEPLOY_MODE=5G
+    volumes:
+      - ./h-plmn/smf:/mnt/smf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "3868/tcp"
+      - "3868/sctp"
+      - "5868/tcp"
+      - "5868/sctp"
+      - "8805/udp"
+      - "2123/udp"
+      - "7777/tcp"
+      - "9090/tcp"
+      - "9091/tcp"
+      - "80/tcp"
+    networks:
+      default:
+        ipv4_address: ${HSMF_IP}
+    dns:
+      - ${DNS_IP}
+  hupf:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - hnrf
+      - hscp
+      - hsmf
+    container_name: hupf
+    env_file:
+      - .env
+      - h-plmn/h-plmn.env
+    environment:
+      - COMPONENT_NAME=upf
+    volumes:
+      - ./h-plmn/upf:/mnt/upf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "2152/udp"
+      - "8805/udp"
+      - "9090/tcp"
+      - "9091/tcp"
+    cap_add:
+      - NET_ADMIN
+    privileged: true
+    sysctls:
+      - net.ipv4.ip_forward=1
+    networks:
+      default:
+        ipv4_address: ${HUPF_IP}
+    dns:
+      - ${DNS_IP}
+  hpcf:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - hnrf
+      - hscp
+      - hdb
+    container_name: hpcf
+    env_file:
+      - .env
+      - h-plmn/h-plmn.env
+    environment:
+      - COMPONENT_NAME=pcf
+    volumes:
+      - ./h-plmn/pcf:/mnt/pcf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+      - "9090/tcp"
+      - "9091/tcp"
+    networks:
+      default:
+        ipv4_address: ${HPCF_IP}
+    dns:
+      - ${DNS_IP}
+  hbsf:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - hnrf
+      - hscp
+      - hdb
+    container_name: hbsf
+    env_file:
+      - .env
+      - h-plmn/h-plmn.env
+    environment:
+      - COMPONENT_NAME=bsf
+    volumes:
+      - ./h-plmn/bsf:/mnt/bsf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+    networks:
+      default:
+        ipv4_address: ${HBSF_IP}
+    dns:
+      - ${DNS_IP}
+  hnssf:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - hnrf
+      - hscp
+      - hdb
+    container_name: hnssf
+    env_file:
+      - .env
+      - h-plmn/h-plmn.env
+    environment:
+      - COMPONENT_NAME=nssf
+    volumes:
+      - ./h-plmn/nssf:/mnt/nssf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+    networks:
+      default:
+        ipv4_address: ${HNSSF_IP}
+    dns:
+      - ${DNS_IP}
+  hsepp:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - hnrf
+      - hscp
+    container_name: hsepp
+    env_file:
+      - .env
+      - h-plmn/h-plmn.env
+    environment:
+      - COMPONENT_NAME=sepp
+    volumes:
+      - ./h-plmn/sepp:/mnt/sepp
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+      - "7778/tcp"
+      - "7779/tcp"
+    networks:
+      default:
+        ipv4_address: ${HSEPP_IP}
+    dns:
+      - ${DNS_IP}
+
+  vnrf:
+    image: docker_open5gs
+    container_name: vnrf
+    depends_on:
+      - dns
+    env_file:
+      - .env
+      - v-plmn/v-plmn.env
+    environment:
+      - COMPONENT_NAME=nrf
+    volumes:
+      - ./v-plmn/nrf:/mnt/nrf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+    networks:
+      default:
+        ipv4_address: ${VNRF_IP}
+    dns:
+      - ${DNS_IP}
+  vscp:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - vnrf
+    container_name: vscp
+    env_file:
+      - .env
+      - v-plmn/v-plmn.env
+    environment:
+      - COMPONENT_NAME=scp
+    volumes:
+      - ./v-plmn/scp:/mnt/scp
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+    networks:
+      default:
+        ipv4_address: ${VSCP_IP}
+    dns:
+      - ${DNS_IP}
+  vamf:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - vnrf
+      - vscp
+    container_name: vamf
+    env_file:
+      - .env
+      - v-plmn/v-plmn.env
+    environment:
+      - COMPONENT_NAME=amf
+    volumes:
+      - ./v-plmn/amf:/mnt/amf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "38412/sctp"
+      - "7777/tcp"
+      - "9091/tcp"
+    # ports:
+    #   - "38412:38412/sctp"
+    networks:
+      default:
+        ipv4_address: ${VAMF_IP}
+    dns:
+      - ${DNS_IP}
+  vsmf:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - vnrf
+      - vscp
+    container_name: vsmf
+    env_file:
+      - .env
+      - v-plmn/v-plmn.env
+    environment:
+      - COMPONENT_NAME=smf
+      # - DEPLOY_MODE=5G
+    volumes:
+      - ./v-plmn/smf:/mnt/smf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "3868/tcp"
+      - "3868/sctp"
+      - "5868/tcp"
+      - "5868/sctp"
+      - "8805/udp"
+      - "2123/udp"
+      - "7777/tcp"
+      - "9090/tcp"
+      - "9091/tcp"
+    networks:
+      default:
+        ipv4_address: ${VSMF_IP}
+    dns:
+      - ${DNS_IP}
+  vupf:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - vnrf
+      - vscp
+      - vsmf
+    container_name: vupf
+    env_file:
+      - .env
+      - v-plmn/v-plmn.env
+    environment:
+      - COMPONENT_NAME=upf
+    volumes:
+      - ./v-plmn/upf:/mnt/upf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "2152/udp"
+      - "8805/udp"
+      - "9090/tcp"
+      - "9091/tcp"
+    cap_add:
+      - NET_ADMIN
+    privileged: true
+    sysctls:
+      - net.ipv4.ip_forward=1
+    networks:
+      default:
+        ipv4_address: ${VUPF_IP}
+    dns:
+      - ${DNS_IP}
+  vpcf:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - vnrf
+      - vscp
+      - vdb
+    container_name: vpcf
+    env_file:
+      - .env
+      - v-plmn/v-plmn.env
+    environment:
+      - COMPONENT_NAME=pcf
+    volumes:
+      - ./v-plmn/pcf:/mnt/pcf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+      - "9090/tcp"
+      - "9091/tcp"
+    networks:
+      default:
+        ipv4_address: ${VPCF_IP}
+    dns:
+      - ${DNS_IP}
+  vbsf:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - vnrf
+      - vscp
+      - vdb
+    container_name: vbsf
+    env_file:
+      - .env
+      - v-plmn/v-plmn.env
+    environment:
+      - COMPONENT_NAME=bsf
+    volumes:
+      - ./v-plmn/bsf:/mnt/bsf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+    networks:
+      default:
+        ipv4_address: ${VBSF_IP}
+    dns:
+      - ${DNS_IP}
+  vnssf:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - vnrf
+      - vscp
+      - vdb
+    container_name: vnssf
+    env_file:
+      - .env
+      - v-plmn/v-plmn.env
+    environment:
+      - COMPONENT_NAME=nssf
+    volumes:
+      - ./v-plmn/nssf:/mnt/nssf
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+    networks:
+      default:
+        ipv4_address: ${VNSSF_IP}
+    dns:
+      - ${DNS_IP}
+  vsepp:
+    image: docker_open5gs
+    depends_on:
+      - dns
+      - vnrf
+      - vscp
+    container_name: vsepp
+    env_file:
+      - .env
+      - v-plmn/v-plmn.env
+    environment:
+      - COMPONENT_NAME=sepp
+    volumes:
+      - ./v-plmn/sepp:/mnt/sepp
+      - ./log:/open5gs/install/var/log/open5gs
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "7777/tcp"
+      - "7778/tcp"
+      - "7779/tcp"
+    networks:
+      default:
+        ipv4_address: ${VSEPP_IP}
+    dns:
+      - ${DNS_IP}
+
+  attacker:
+    build: ./attacker
+    container_name: attacker
+    cap_add:
+    - NET_ADMIN
+    - NET_RAW
+    networks:
+      default:
+        ipv4_address: ${ATTACKER_IP}
+
+networks:
+  default:
+    name: roaming_open5gs_default
+    ipam:
+      config:
+        - subnet: ${TEST_NETWORK}
+
+volumes:
+  hdbdata:
+    name: my_open5gs_hdbdata
+  vdbdata:
+    name: my_open5gs_vdbdata

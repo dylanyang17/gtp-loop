@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+    oai-gnb:
+        build: oai-uegnb-base 
+        container_name: oai-gnb
+        network_mode: host
+        privileged: true
+        volumes:
+            - ./oai-gnb/init.sh:/init.sh

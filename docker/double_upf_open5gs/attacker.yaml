@@ -1,0 +1,18 @@
+services:
+  attacker:
+    build: ../open5gs/attacker
+    image: docker_open5gs_attacker
+    container_name: double_upf_attacker
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    env_file:
+      - .env
+    networks:
+      default:
+        ipv4_address: ${ATTACKER_IP}
+
+networks:
+  default:
+    external: true
+    name: double_upf_open5gs_default

@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+    oai-ue:
+        build: oai-uegnb-base 
+        container_name: oai-ue
+        privileged: true
+        volumes:
+            - ./oai-ue/init.sh:/init.sh
+            - ./oai-ue/nrue.uicc.conf:/nrue.uicc.conf
+        environment:
+            - RFSIM_SERVER_ADDR=host.docker.internal
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        networks:
+            public_net:
+                ipv4_address: 192.168.70.141
+
+networks:
+    public_net:
+        external: true
+        name: oai-cn5g-public-net

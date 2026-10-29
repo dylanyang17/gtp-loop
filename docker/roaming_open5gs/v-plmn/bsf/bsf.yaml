@@ -1,0 +1,26 @@
+logger:
+  file:
+    path: /open5gs/install/var/log/open5gs/v-bsf.log
+#  level: info   # fatal|error|warn|info(default)|debug|trace
+
+sbi:
+    server:
+      no_tls: true
+    client:
+      no_tls: true
+
+global:
+  max:
+    ue: MAX_NUM_UE  # The number of UE can be increased depending on memory size.
+#    peer: 64
+
+bsf:
+  sbi:
+    server:
+      - address: bsf.5gc.mncMNC.mccMCC.3gppnetwork.org
+        port: 7777
+    client:
+#      nrf:
+#        - uri: http://127.0.0.10:7777
+      scp:
+        - uri: http://scp.5gc.mncMNC.mccMCC.3gppnetwork.org:7777

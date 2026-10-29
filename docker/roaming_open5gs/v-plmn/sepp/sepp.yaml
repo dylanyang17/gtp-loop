@@ -1,0 +1,69 @@
+logger:
+  file:
+    path: /open5gs/install/var/log/open5gs/v-sepp.log
+  level: info   # fatal|error|warn|info(default)|debug|trace
+
+info:
+  port:
+    http: 7777
+
+sbi:
+    server:
+      no_tls: true
+    client:
+      no_tls: true
+
+global:
+  max:
+    ue: MAX_NUM_UE  # The number of UE can be increased depending on memory size.
+#    peer: 64
+
+sepp:
+  sbi:
+    server:
+      - address: sepp.5gc.mncMNC.mccMCC.3gppnetwork.org
+        port: 7777
+    client:
+      scp:
+        - uri: http://scp.5gc.mncMNC.mccMCC.3gppnetwork.org:7777
+  n32:
+    server:
+      - sender: sepp.5gc.mncMNC.mccMCC.3gppnetwork.org
+    client:
+      sepp:
+        - receiver: sepp.5gc.mncOMNC.mccOMCC.3gppnetwork.org
+          uri: http://sepp.5gc.mncOMNC.mccOMCC.3gppnetwork.org:7777
+
+# Use distinct SEPP addresses with the same N32 port.
+#   default:
+#     tls:
+#       server:
+#         private_key: /open5gs/install/etc/open5gs/tls/sepp.key
+#         cert: /open5gs/install/etc/open5gs/tls/sepp.crt
+#       client:
+#         cacert: /open5gs/install/etc/open5gs/tls/ca.crt
+#   sbi:
+#     server:
+#       - address: sepp.5gc.mncMNC.mccMCC.3gppnetwork.org
+#         port: 7777
+#     client:
+# #      nrf:
+# #        - uri: http://127.0.0.10:7777
+#       scp:
+#         - uri: http://scp.5gc.mncMNC.mccMCC.3gppnetwork.org:7777
+#   n32:
+#     server:
+#       - sender: sepp.5gc.mncMNC.mccMCC.3gppnetwork.org
+#         scheme: https
+#         address: sepp.5gc.mncMNC.mccMCC.3gppnetwork.org
+#         port: 7778
+#         n32f:
+#           scheme: https
+#           address: sepp.5gc.mncMNC.mccMCC.3gppnetwork.org
+#           port: 7779
+#     client:
+#       sepp:
+#         - receiver: sepp.5gc.mncOMNC.mccOMCC.3gppnetwork.org
+#           uri: https://sepp.5gc.mncOMNC.mccOMCC.3gppnetwork.org:7778
+#           n32f:
+#             uri: https://sepp.5gc.mncOMNC.mccOMCC.3gppnetwork.org:7779

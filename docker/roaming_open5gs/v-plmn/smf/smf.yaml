@@ -1,0 +1,53 @@
+logger:
+  file:
+    path: /open5gs/install/var/log/open5gs/v-smf.log
+  #level: debug   # fatal|error|warn|info(default)|debug|trace
+
+sbi:
+    server:
+      no_tls: true
+    client:
+      no_tls: true
+
+global:
+  max:
+    ue: MAX_NUM_UE  # The number of UE can be increased depending on memory size.
+#    peer: 64
+
+smf:
+  sbi:
+    server:
+      - address: smf.5gc.mncMNC.mccMCC.3gppnetwork.org
+        port: 7777
+    client:
+#      nrf:
+#        - uri: http://127.0.1.10:7777
+      scp:
+        - uri: http://scp.5gc.mncMNC.mccMCC.3gppnetwork.org:7777
+  pfcp:
+    server:
+      - address: smf.5gc.mncMNC.mccMCC.3gppnetwork.org
+    client:
+      upf:
+        - address: upf.5gc.mncMNC.mccMCC.3gppnetwork.org
+  gtpc:
+    server:
+      - address: smf.5gc.mncMNC.mccMCC.3gppnetwork.org
+  gtpu:
+    server:
+      - address: smf.5gc.mncMNC.mccMCC.3gppnetwork.org
+  metrics:
+    server:
+      - address: smf.5gc.mncMNC.mccMCC.3gppnetwork.org
+        port: 9090
+  session:
+    - subnet: UE_IPV4_INTERNET
+      gateway: UE_IPV4_INTERNET_APN_GATEWAY_IP
+    - subnet: 2001:db8:babe::/48
+      gateway: 2001:db8:babe::1
+  dns:
+    - 8.8.8.8
+    - 8.8.4.4
+    - 2001:4860:4860::8888
+    - 2001:4860:4860::8844
+  mtu: 1400

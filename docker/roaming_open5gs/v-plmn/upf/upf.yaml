@@ -1,0 +1,37 @@
+logger:
+  file:
+    path: /open5gs/install/var/log/open5gs/v-upf.log
+  # level: debug   # fatal|error|warn|info(default)|debug|trace
+
+sbi:
+    server:
+      no_tls: true
+    client:
+      no_tls: true
+
+global:
+  max:
+    ue: MAX_NUM_UE  # The number of UE can be increased depending on memory size.
+#    peer: 64
+
+upf:
+  pfcp:
+    server:
+      - address: upf.5gc.mncMNC.mccMCC.3gppnetwork.org
+    client:
+      # smf:     #  UPF PFCP Client try to associate SMF PFCP Server
+      #   - address: smf.5gc.mncMNC.mccMCC.3gppnetwork.org
+  gtpu:
+    server:
+      - address: upf.5gc.mncMNC.mccMCC.3gppnetwork.org
+  session:
+    - subnet: UE_IPV4_INTERNET
+      gateway: UE_IPV4_INTERNET_APN_GATEWAY_IP
+      dev: UPF_INTERNET_APN_IF_NAME
+    - subnet: 2001:db8:babe::/48
+      gateway: 2001:db8:babe::1
+      dev: UPF_INTERNET_APN_IF_NAME
+  metrics:
+    server:
+      - address: upf.5gc.mncMNC.mccMCC.3gppnetwork.org
+        port: 9090

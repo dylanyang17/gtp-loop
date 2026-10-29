@@ -1,0 +1,17 @@
+services:
+  attacker:
+    build: ./attacker
+    container_name: attacker
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    env_file:
+      - .env
+    networks:
+      default:
+        ipv4_address: ${ATTACKER_IP}
+
+networks:
+  default:
+    external: true
+    name: open5gs_5g_default

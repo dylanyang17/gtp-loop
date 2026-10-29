@@ -1,0 +1,99 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Upstream copyright 2013-2023 Software Radio Systems Limited.
+# Modifications copyright (c) 2026 gtp-loop contributors.
+# Modified: 2026-10-28
+# Add a configurable visited Serving Network Name for roaming authentication.
+# Base: srsran/srsRAN_4G ec29b0c1ff79cebcbe66caa6d6b90778261c42b8
+# License text: ../../../LICENSES/AGPL-3.0-or-later.txt
+
+diff -ruN srsue_origin/hdr/stack/upper/usim_base.h srsue/hdr/stack/upper/usim_base.h
+--- srsue_origin/hdr/stack/upper/usim_base.h
++++ srsue/hdr/stack/upper/usim_base.h
+@@ -59,6 +59,7 @@
+   std::string opc;
+   std::string imsi;
+   std::string imei;
++  std::string snn;
+   std::string k;
+   std::string pin;
+   std::string reader;
+@@ -84,6 +85,7 @@
+   bool get_home_msin_bcd(uint8_t* msin_, uint32_t n) final;
+   bool get_imei_vec(uint8_t* imei_, uint32_t n) final;
+   bool get_home_plmn_id(srsran::plmn_id_t* home_plmn_id) final;
++  std::string get_snn() final;
+ 
+   virtual auth_result_t generate_authentication_response(uint8_t* rand,
+                                                          uint8_t* autn_enb,
+@@ -140,6 +142,7 @@
+   uint64_t    imei = 0;
+   std::string imsi_str;
+   std::string imei_str;
++  std::string snn_str;
+ 
+   // Security variables
+   uint8_t ck[CK_LEN]             = {};
+diff -ruN srsue_origin/src/main.cc srsue/src/main.cc
+--- srsue_origin/src/main.cc
++++ srsue/src/main.cc
+@@ -206,6 +206,7 @@
+     ("usim.imsi", bpo::value<string>(&args->stack.usim.imsi), "USIM IMSI")
+     ("usim.imei", bpo::value<string>(&args->stack.usim.imei), "USIM IMEI")
+     ("usim.k", bpo::value<string>(&args->stack.usim.k), "USIM K")
++    ("usim.snn", bpo::value<string>(&args->stack.usim.snn), "Serving Network Name")
+     ("usim.pin", bpo::value<string>(&args->stack.usim.pin), "PIN in case real SIM card is used")
+     ("usim.reader", bpo::value<string>(&args->stack.usim.reader)->default_value(""), "Force specific PCSC reader. Default: Try all available readers.")
+ 
+diff -ruN srsue_origin/src/stack/upper/nas_5g.cc srsue/src/stack/upper/nas_5g.cc
+--- srsue_origin/src/stack/upper/nas_5g.cc
++++ srsue/src/stack/upper/nas_5g.cc
+@@ -885,15 +885,19 @@
+               authentication_request.authentication_parameter_rand.rand.size(),
+               "Authentication request AUTN");
+ 
+-  logger.info("Serving network name %s", plmn_id.to_serving_network_name_string().c_str());
++
++  // logger.info("Serving network name %s", plmn_id.to_serving_network_name_string().c_str());
++  std::string snn = usim->get_snn();
++  logger.info("Serving network name %s", snn);
+   auth_result_t auth_result =
+       usim->generate_authentication_response_5g(authentication_request.authentication_parameter_rand.rand.data(),
+                                                 authentication_request.authentication_parameter_autn.autn.data(),
+-                                                plmn_id.to_serving_network_name_string().c_str(),
++                                                snn.c_str(),
+                                                 authentication_request.abba.abba_contents.data(),
+                                                 authentication_request.abba.abba_contents.size(),
+                                                 res_star,
+                                                 ctxt_5g.k_amf);
++  ////
+ 
+   logger.info(ctxt_5g.k_amf, 32, "Generated k_amf:");
+ 
+diff -ruN srsue_origin/src/stack/upper/usim_base.cc srsue/src/stack/upper/usim_base.cc
+--- srsue_origin/src/stack/upper/usim_base.cc
++++ srsue/src/stack/upper/usim_base.cc
+@@ -131,6 +131,13 @@
+   return true;
+ }
+ 
++// Return the configured visited Serving Network Name.
++std::string usim_base::get_snn()
++{
++  return snn_str;
++}
++///
++
+ bool usim_base::get_home_mcc_bytes(uint8_t* mcc_, uint32_t n)
+ {
+   if (!initiated) {
+diff -ruN srsue_origin/src/stack/upper/usim.cc srsue/src/stack/upper/usim.cc
+--- srsue_origin/src/stack/upper/usim.cc
++++ srsue/src/stack/upper/usim.cc
+@@ -34,6 +34,7 @@
+ {
+   imsi_str = args->imsi;
+   imei_str = args->imei;
++  snn_str = args->snn;
+ 
+   const char* imsi_c = args->imsi.c_str();
+   const char* imei_c = args->imei.c_str();

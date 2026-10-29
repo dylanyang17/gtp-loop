@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Upstream copyright 2013-2023 Software Radio Systems Limited.
+# Modifications copyright (c) 2026 gtp-loop contributors.
+# Modified: 2026-10-28
+# Add a configurable visited Serving Network Name for roaming authentication.
+# Base: srsran/srsRAN_4G ec29b0c1ff79cebcbe66caa6d6b90778261c42b8
+# License text: ../../../LICENSES/AGPL-3.0-or-later.txt
+
+diff -ruN lib_origin/include/srsran/interfaces/ue_usim_interfaces.h lib/include/srsran/interfaces/ue_usim_interfaces.h
+--- lib_origin/include/srsran/interfaces/ue_usim_interfaces.h
++++ lib/include/srsran/interfaces/ue_usim_interfaces.h
+@@ -35,6 +35,7 @@
+ public:
+   virtual std::string get_imsi_str()                                    = 0;
+   virtual std::string get_imei_str()                                    = 0;
++  virtual std::string get_snn()                                         = 0;
+   virtual bool        get_imsi_vec(uint8_t* imsi_, uint32_t n)          = 0;
+   virtual bool        get_imei_vec(uint8_t* imei_, uint32_t n)          = 0;
+   virtual bool        get_home_plmn_id(srsran::plmn_id_t* home_plmn_id) = 0;

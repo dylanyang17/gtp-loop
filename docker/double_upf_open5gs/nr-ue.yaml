@@ -1,0 +1,28 @@
+services:
+  nr_ue:
+    build: ../open5gs/ueransim
+    image: docker_ueransim
+    container_name: double_upf_nr_ue1
+    command: /mnt/ueransim/ueransim-ue_init.sh
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./ueransim:/mnt/ueransim
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env
+    environment:
+      - COMPONENT_NAME=ueransim-ue
+    expose:
+      - "4997/udp"
+    cap_add:
+      - NET_ADMIN
+    privileged: true
+    networks:
+      default:
+        ipv4_address: ${NR_UE_IP}
+networks:
+  default:
+    external: true
+    name: double_upf_open5gs_default

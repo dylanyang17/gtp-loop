@@ -1,0 +1,33 @@
+server:
+  interface: 0.0.0.0
+  access-control: 0.0.0.0/0 allow
+
+local-zone: "3gppnetwork.org." static
+
+local-data: "nrf.5gc.mnc${HMNC}.mcc${HMCC}.3gppnetwork.org. IN A ${HNRF_IP}"
+local-data: "scp.5gc.mnc${HMNC}.mcc${HMCC}.3gppnetwork.org. IN A ${HSCP_IP}"
+local-data: "ausf.5gc.mnc${HMNC}.mcc${HMCC}.3gppnetwork.org. IN A ${HAUSF_IP}"
+local-data: "udm.5gc.mnc${HMNC}.mcc${HMCC}.3gppnetwork.org. IN A ${HUDM_IP}"
+local-data: "udr.5gc.mnc${HMNC}.mcc${HMCC}.3gppnetwork.org. IN A ${HUDR_IP}"
+local-data: "db.5gc.mnc${HMNC}.mcc${HMCC}.3gppnetwork.org. IN A ${HDB_IP}"
+local-data: "smf.5gc.mnc${HMNC}.mcc${HMCC}.3gppnetwork.org. IN A ${HSMF_IP}"
+local-data: "upf.5gc.mnc${HMNC}.mcc${HMCC}.3gppnetwork.org. IN A ${HUPF_IP}"
+local-data: "pcf.5gc.mnc${HMNC}.mcc${HMCC}.3gppnetwork.org. IN A ${HPCF_IP}"
+local-data: "bsf.5gc.mnc${HMNC}.mcc${HMCC}.3gppnetwork.org. IN A ${HBSF_IP}"
+local-data: "nssf.5gc.mnc${HMNC}.mcc${HMCC}.3gppnetwork.org. IN A ${HNSSF_IP}"
+local-data: "sepp.5gc.mnc${HMNC}.mcc${HMCC}.3gppnetwork.org. IN A ${HSEPP_IP}"
+
+local-data: "nrf.5gc.mnc${VMNC}.mcc${VMCC}.3gppnetwork.org. IN A ${VNRF_IP}"
+local-data: "scp.5gc.mnc${VMNC}.mcc${VMCC}.3gppnetwork.org. IN A ${VSCP_IP}"
+local-data: "amf.5gc.mnc${VMNC}.mcc${VMCC}.3gppnetwork.org. IN A ${VAMF_IP}"
+local-data: "db.5gc.mnc${VMNC}.mcc${VMCC}.3gppnetwork.org. IN A ${VDB_IP}"
+local-data: "smf.5gc.mnc${VMNC}.mcc${VMCC}.3gppnetwork.org. IN A ${VSMF_IP}"
+local-data: "upf.5gc.mnc${VMNC}.mcc${VMCC}.3gppnetwork.org. IN A ${VUPF_IP}"
+local-data: "pcf.5gc.mnc${VMNC}.mcc${VMCC}.3gppnetwork.org. IN A ${VPCF_IP}"
+local-data: "bsf.5gc.mnc${VMNC}.mcc${VMCC}.3gppnetwork.org. IN A ${VBSF_IP}"
+local-data: "nssf.5gc.mnc${VMNC}.mcc${VMCC}.3gppnetwork.org. IN A ${VNSSF_IP}"
+local-data: "sepp.5gc.mnc${VMNC}.mcc${VMCC}.3gppnetwork.org. IN A ${VSEPP_IP}"
+
+forward-zone:
+  name: "."
+  forward-addr: 8.8.8.8
