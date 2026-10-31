@@ -31,10 +31,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install updates and dependencies
 RUN apt-get update && \
     apt-get -y install cmake make gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev \
-    libzmq3-dev software-properties-common pkg-config net-tools iputils-ping git libuhd-dev uhd-host
+    libzmq3-dev software-properties-common pkg-config net-tools iputils-ping git
 
 # Download FPGA images for USRP devices
-RUN uhd_images_downloader
 
 # Get srsRAN_Project, **patch (to increase the maximum limit of inactivity_timer)**, compile and install
 RUN git clone https://github.com/herlesupreeth/srsRAN_Project.git && \
@@ -45,7 +44,5 @@ RUN git clone https://github.com/herlesupreeth/srsRAN_Project.git && \
     mkdir build && cd build && \
     cmake ../ -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON && make -j`nproc` && make install && \
     ldconfig
-
-ENV UHD_IMAGES_DIR=/usr/share/uhd/images/
 
 CMD ["/mnt/srsran/srsran_init.sh"]

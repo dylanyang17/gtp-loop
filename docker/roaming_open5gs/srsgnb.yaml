@@ -1,6 +1,6 @@
 services:
   srsgnb:
-    image: my_srsgnb
+    image: roaming_srsgnb
     container_name: srsgnb
     stdin_open: true
     tty: true

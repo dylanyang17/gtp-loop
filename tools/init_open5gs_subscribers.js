@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // Copyright (c) 2026 gtp-loop contributors.
 // The Python helper provides `subscribers` through stdin.
+// Compatibility: keep this file free of optional chaining (`?.`) and
+// nullish coalescing (`??`). The mongosh builds bundled with current
+// mongo:6.0 images evaluate `x?.method()` incorrectly in --file mode
+// ("this is null or not defined"), which breaks subscriber seeding.
 
 function equal(a, b) {
     if (typeof a === 'string' && typeof b === 'string') {
@@ -9,19 +13,32 @@ function equal(a, b) {
     return a === b;
 }
 
+function nullish(value) {
+    return (value === undefined || value === null) ? null : value;
+}
+
+function field(object, key) {
+    return nullish((object === undefined || object === null) ? undefined : object[key]);
+}
+
 function verify(actual, expected) {
-    for (const field of ['k', 'op', 'opc', 'amf']) {
-        if (!equal(actual.security?.[field] ?? null, expected.security[field])) {
-            throw new Error('Existing subscriber ' + expected.imsi + ' has different ' + field);
+    for (const item of ['k', 'op', 'opc', 'amf']) {
+        if (!equal(field(actual.security, item), expected.security[item])) {
+            throw new Error('Existing subscriber ' + expected.imsi + ' has different ' + item);
         }
     }
     if (actual.subscriber_status !== 0) {
         throw new Error('Existing subscriber ' + expected.imsi + ' is not enabled');
     }
     for (const slice of expected.slice) {
-        const found = actual.slice?.find(s => s.sst === slice.sst && equal(s.sd ?? null, slice.sd ?? null));
+        let found = undefined;
+        if (actual.slice !== undefined && actual.slice !== null) {
+            found = actual.slice.find(s => s.sst === slice.sst && equal(nullish(s.sd), nullish(slice.sd)));
+        }
         for (const session of slice.session) {
-            const configured = found?.session?.find(s => s.name === session.name);
+            const configured = (found !== undefined && found !== null && found.session !== undefined && found.session !== null)
+                ? found.session.find(s => s.name === session.name)
+                : undefined;
             // IPv4v6 subscriptions also allow the bundled IPv4 UE sessions.
             if (!configured || ![1, 3].includes(configured.type) ||
                 ('lbo_roaming_allowed' in session && configured.lbo_roaming_allowed === true)) {
@@ -30,7 +47,7 @@ function verify(actual, expected) {
         }
     }
     for (const number of expected.msisdn) {
-        if (!actual.msisdn?.includes(number)) {
+        if (!(actual.msisdn !== undefined && actual.msisdn !== null && actual.msisdn.includes(number))) {
             throw new Error('Existing subscriber ' + expected.imsi + ' has a different MSISDN');
         }
     }

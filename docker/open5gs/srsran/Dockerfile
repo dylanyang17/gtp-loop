@@ -33,18 +33,11 @@ RUN apt-get update && \
     apt-get -y install cmake make gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev \
     libzmq3-dev software-properties-common pkg-config net-tools iputils-ping git
 
-# UHD drivers for USRP
-RUN add-apt-repository ppa:ettusresearch/uhd && \
-    apt update && apt -y install libuhd-dev uhd-host && \
-    uhd_images_downloader
-
 # Get srsRAN_Project, compile and install
 RUN git clone https://github.com/srsran/srsRAN_Project.git && \
     cd srsRAN_Project && git checkout 920ee6ecebfdfc8595165d4b42ebafca630854f7 && \
     mkdir build && cd build && \
     cmake ../ -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON && make -j`nproc` && make install && \
     ldconfig
-
-ENV UHD_IMAGES_DIR=/usr/share/uhd/images/
 
 CMD ["/mnt/srsran/srsran_init.sh"]

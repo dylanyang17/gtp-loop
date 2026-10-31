@@ -138,7 +138,13 @@ def open5gs_users(name, directory, env, msisdn):
 
 
 class Vty:
-    """Read OsmoHLR prompts and refuse unused Telnet options."""
+    """Read OsmoHLR prompts and refuse unused Telnet options.
+
+    OsmoHLR 1.9.x reprints its prompt after an idle period, and command
+    output can trail an earlier stray prompt. A response that consists of
+    bare prompt lines only is therefore not accepted immediately: we wait
+    briefly for extra bytes and keep reading if the real output follows.
+    """
 
     def __init__(self, host):
         self.socket = socket.create_connection((host, 4258), timeout=5)
@@ -147,6 +153,26 @@ class Vty:
         except Exception:
             self.socket.close()
             raise
+
+    @staticmethod
+    def _prompt_only(output):
+        # Every non-empty line looks like a prompt ("OsmoHLR# ", "OsmoHLR> ").
+        for line in output.split(b"\n"):
+            line = line.strip(b"\r")
+            if line and not re.fullmatch(rb"[^\r\n]*[>#] $", line):
+                return False
+        return True
+
+    def _settle(self, seconds):
+        # True when no further bytes arrive within the window.
+        self.socket.settimeout(seconds)
+        try:
+            self.socket.recv(1, socket.MSG_PEEK)
+            return False
+        except socket.timeout:
+            return True
+        finally:
+            self.socket.settimeout(5)
 
     def read_prompt(self):
         output = bytearray()
@@ -172,6 +198,8 @@ class Vty:
                 continue
             output.extend(value)
             if re.search(rb"(?:^|[\r\n])[^\r\n]*[>#] $", output):
+                if self._prompt_only(output) and not self._settle(2.5):
+                    continue
                 return output.decode("utf-8", errors="replace")
 
     def command(self, command):
@@ -301,7 +329,8 @@ def provision_free5gc(directory, url, timeout):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("environment", choices=ENVIRONMENTS)
+    parser.add_argument("environment", choices=ENVIRONMENTS,
+                        help="provision exactly this environment's subscriber(s)")
     parser.add_argument("--timeout", type=int, default=90, help="service readiness timeout in seconds")
     parser.add_argument("--msisdn", default="1234", help="E1 test subscriber phone number (default: 1234)")
     parser.add_argument("--webui-url", default="http://127.0.0.1:5000", help="E5 WebUI URL")

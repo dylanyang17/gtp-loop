@@ -3,8 +3,8 @@
 # Copyright (c) 2020-2025, Supreeth Herle
 # All rights reserved.
 
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+# Redistribution and use in binary form, with or without
+# modification, is permitted provided that the following conditions are met:
 
 # 1. Redistributions of source code must retain the above copyright notice, this
 #    list of conditions and the following disclaimer.
@@ -28,58 +28,11 @@ FROM ubuntu:jammy
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install updates and dependencies
+# ZMQ radio dependencies only (no SDR hardware drivers)
 RUN apt-get update && \
     apt-get -y install cmake libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev git \
-    libzmq3-dev libboost-system-dev libboost-test-dev libboost-thread-dev libqwt-qt5-dev qtbase5-dev \
-    software-properties-common g++ make pkg-config libpython2-dev python3-numpy swig libi2c-dev \
-    libboost-program-options-dev libconfig++-dev net-tools iputils-ping libusb-1.0-0-dev libpython3-dev python3-numpy swig \
-    python3-distutils iproute2 wget
-
-# Get SoapySDR, compile and install
-RUN git clone https://github.com/pothosware/SoapySDR.git && \
-    cd SoapySDR && \
-    git checkout 640ac414f7c8bd77a581661d5d99372cd79419f3 && \
-    mkdir build && cd build && \
-    cmake ../ && make && make install && \
-    ldconfig
-
-# Get Limesuite, compile and install
-RUN git clone https://github.com/myriadrf/LimeSuite.git && \
-    cd LimeSuite && \
-    git checkout 524cd2e548b11084e6f739b2dfe0f958c2e30354 && \
-    mkdir builddir && cd builddir && \
-    cmake ../ && make && make install && \
-    ldconfig
-
-# Get BladeRF, compile and install
-RUN git clone https://github.com/Nuand/bladeRF.git && \
-    cd bladeRF/host/ && git checkout tags/2024.05 && \
-    mkdir build && cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DINSTALL_UDEV_RULES=ON -DBLADERF_GROUP=plugdev ../ && make && make install && \
-    ldconfig && \
-    mkdir -p /etc/Nuand/bladeRF/ && \
-    wget https://www.nuand.com/fpga/hostedxA4-latest.rbf --output-document /etc/Nuand/bladeRF/hostedxA4-latest.rbf
-
-# Get SoapySDR for BladeRF, compile and install
-RUN git clone https://github.com/pothosware/SoapyBladeRF.git && \
-    cd SoapyBladeRF && \
-    mkdir build && cd build && \
-    cmake ../ && make && make install && \
-    ldconfig
-
-# UHD drivers for USRP
-RUN add-apt-repository ppa:ettusresearch/uhd && \
-    apt update && apt -y install libuhd-dev uhd-host && \
-    uhd_images_downloader
-
-# Get srsGUI, compile and install
-RUN git clone https://github.com/srsran/srsGUI && \
-    cd srsGUI/ && \
-    mkdir build && cd build && \
-    cmake ../ && make -j`nproc` && make install && ldconfig
-
-#RUN apt-get update && apt-get install -y gdb libdw-dev
+    libzmq3-dev libboost-system-dev libboost-test-dev libboost-thread-dev \
+    g++ make pkg-config net-tools iputils-ping iproute2
 
 # Get srsLTE, compile and install
 RUN git clone https://github.com/srsran/srsRAN_4G.git && \
@@ -91,8 +44,4 @@ RUN git clone https://github.com/srsran/srsRAN_4G.git && \
 
 RUN cd srsRAN_4G/build && srsran_install_configs.sh service
 
-ENV UHD_IMAGES_DIR=/usr/share/uhd/images/
-
 CMD ["/mnt/srslte/srslte_init.sh"]
-
-#gdb /usr/local/bin/srsenb

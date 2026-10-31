@@ -1,6 +1,6 @@
 services:
   srsue_5g_zmq:
-    image: my_srsue
+    image: roaming_srsue
     container_name: srsue_5g_zmq
     stdin_open: true
     tty: true

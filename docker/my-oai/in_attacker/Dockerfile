@@ -13,5 +13,7 @@ RUN apt-get update \
 	vim \
 	tmux
 
+RUN pip3 install --no-cache-dir scapy
+
 
 CMD ["sleep", "infinity"]
